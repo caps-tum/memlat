@@ -1,0 +1,10 @@
+#! /bin/sh
+
+for (( i=0; i<4; i++))
+do
+  for (( j=0; j<4; j++))
+  do
+    echo membind $j    cpubind $i
+    numactl --membind $j --cpubind $i ./run.pl cpu${i}mem${j} 5 100000
+  done
+done
