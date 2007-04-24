@@ -1,0 +1,31 @@
+Benchmark for meassuring Memory Access Latencies
+==================================================
+
+This benchmark does exact latency measurement by
+enclosing a load instruction with rdtsc (ie.
+specific to x86!).
+
+The benchmarks first creates a pointer list inside
+of a memory array of a given size, and then measures
+latencies of individual loads that follow the linked
+list. Randomizing of addresses of successive elements
+ensures that no hardware prefetcher goes into the way
+of the benchmark.
+By adjusting the size of the array, one can influence
+whether the data e.g. fits into cache or local memory
+(on NUMA), thus showing different histogram.
+
+By doing multiple loads, a histogram is generated which
+shows how often a given latency was meassured. This
+gives peaks around cycle latencies which show special
+events like L1/L2 miss, main memory access, TLB miss etc.
+For NUMA systems, the added latency of remote memory accesses
+should be visible this way.
+
+Usage: See help message of run.pl
+There is a *.gp file generated which allows to produce
+a diagram with gnuplot.
+
+
+MMI Team, LRR TUM
+
