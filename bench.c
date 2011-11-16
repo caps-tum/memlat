@@ -1,6 +1,10 @@
-#include <asm/msr.h>
+//#include <asm/msr.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#define rdtsc(low,high) \
+     __asm__ __volatile__ ("cpuid" : : "a" (0) : "bx", "cx", "dx"); \
+     __asm__ __volatile__("rdtsc" : "=a" (low), "=d" (high))
 
 typedef unsigned long long u64;
 
