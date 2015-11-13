@@ -3,8 +3,9 @@
 #include <stdlib.h>
 
 #define rdtsc(low,high) \
-     __asm__ __volatile__ ("cpuid" : : "a" (0) : "bx", "cx", "dx"); \
-     __asm__ __volatile__("rdtsc" : "=a" (low), "=d" (high))
+     __asm__ __volatile__("cpuid" : : "a" (0) : "bx", "cx", "dx"); \
+     __asm__ __volatile__("rdtsc" : "=a" (low), "=d" (high)); \
+     __asm__ __volatile__("cpuid" : : "a" (0) : "bx", "cx", "dx")
 
 typedef unsigned long long u64;
 
@@ -27,13 +28,26 @@ main(int argc, char* argv[])
   int rounds, cycle, bufentries;
   void **buf, **pos;
   int i, inext, j, accs = 0;
-  u64 diff, start, maxdiff;
+  u64 ov, diff, start, maxdiff;
   int istart, iend, res = 0;
+  void* dummyP;
+
+  dummyP = (void*) & dummyP;
 
   if (argc >1) bufsize = atoi(argv[1]) * 1000;
   if (argc >2) maxaccs = atoi(argv[2]);
   if (argc >3) stride = atoi(argv[3]);
 
+  if ((bufsize == 0) || (maxaccs == 0) || (stride == 0)) {
+     fprintf(stderr,
+	     "Memlat: Histogram of access latencies from linked-list traversal.\n"
+	     "Usage: %s [<size> [<accs> [<stride>]]]\n\n"
+	     " <size>    Buffer size in K (def. 1000 for 1MB)\n"
+	     " <accs>    Maximal number of accesses done in Mio. (def. 50)\n"
+	     " <stride>  Stride between accesses (def. huge for pseudo-random)\n", argv[0]);
+     exit(1);
+  }
+  
   bufentries = bufsize / sizeof(void*);
   buf = (void**) malloc( bufsize );
   for(i = 0;i<bufentries;i++)
@@ -94,6 +108,16 @@ main(int argc, char* argv[])
 
   fprintf(stderr, "Done %d accesses...\n", accs);
 
+  ov = 9999;
+  pos = dummyP;
+  for(j=0;j<cycle;j++) {
+    start = rdtsc_read();
+    //pos = *pos;
+    diff = rdtsc_read() - start;
+    if (diff<ov) ov = diff;
+  }
+  fprintf(stderr, "Measurement overhead: %llu cycles\n", ov);
+  
 #if 0
   istart=0;
   iend = histsize-1;
@@ -104,14 +128,14 @@ main(int argc, char* argv[])
     if (hist[iend] > accs/1000) break;
 #endif
 
-  istart -= 20;
-  if (istart<0) istart = 0;
-  iend += 20;
-  if (iend>=histsize) iend = histsize-1;
+  //if (istart<ov) istart = ov;
+  //iend += 20;
+  //if (iend>=histsize) iend = histsize-1;
   
-  fprintf(stderr, "Dumping histogram [%d;%d] (res %d)\n", istart, iend, res);
+  fprintf(stderr, "Dumping histogram [%d;%d] (res %d)\n",
+	  istart-ov, iend-ov, res);
 
 
   for(i = istart;i<iend;i++)
-    printf("%d %.2f\n", i, 1000.0 * hist[i] / accs );
+    printf("%d %.2f\n", i-ov, 1000.0 * hist[i] / accs );
 }
