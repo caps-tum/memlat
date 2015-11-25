@@ -21,7 +21,7 @@ if ($from * $step > $to) {
 $cur = $from;
 @results = ();
 while($cur <= $to) {
-  print "Running with size $cur...\n";
+  print "Running './bench $cur > $prefix.$cur' with size $cur...\n"; 
   system "./bench $cur > $prefix.$cur";
   push @results, "$prefix.$cur";
   $cur = $cur * $step;

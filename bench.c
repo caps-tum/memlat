@@ -3,9 +3,11 @@
 #include <stdlib.h>
 
 #define rdtsc(low,high) \
-     __asm__ __volatile__("cpuid" : : "a" (0) : "bx", "cx", "dx"); \
+     __asm__ __volatile__("mfence" ::: "memory"); \
      __asm__ __volatile__("rdtsc" : "=a" (low), "=d" (high)); \
-     __asm__ __volatile__("cpuid" : : "a" (0) : "bx", "cx", "dx")
+     __asm__ __volatile__("mfence" ::: "memory");
+
+
 
 typedef unsigned long long u64;
 
@@ -99,7 +101,7 @@ main(int argc, char* argv[])
       pos = *pos;
       diff = rdtsc_read() - start;
       if (diff>histsize) continue;
-      hist[diff]++;
+      hist[(diff/5)*5]++;
       accs++;
     }
   }
